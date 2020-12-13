@@ -42,7 +42,7 @@ const OfficeSpacePage = () => {
   const peerjs = useRef<Peer | null>(null); // useRef(new Peer());
   const [userList, setUserList] = useState<Spaces.User[]>([]);
   const [userId, setUserId] = useState<string>(null!);
-  const socket = React.useMemo(() => io("http://localhost:5000/"), []);
+  const socket = React.useMemo(() => io("http://spaces-vr.herokuapp.com/"), []);
 
   useEffect(() => {
     if (roomId == null) {
