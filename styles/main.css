@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Typography */
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&display=swap");
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Body */
+html,
+body,
+#__next {
+  height: 100% !important;
+  min-height: 100vh !important;
+  overflow-x: hidden;
+}
