@@ -1,8 +1,13 @@
 import { PositionalAudio } from "./PositionalAudio";
 import React from "react";
 import * as THREE from "three";
+import { useThree } from "react-three-fiber";
 
 const fontLoader = new THREE.FontLoader();
+
+function distance(a, b, c, d, e, f) {
+  return Math.sqrt((a - d) * (a - d) + (b - e) * (b - e) + (c - f) * (c - f));
+}
 
 const User = ({ user }: { user: Spaces.User }) => {
   let [font, setFont] = React.useState<THREE.Font>();
@@ -31,8 +36,6 @@ const User = ({ user }: { user: Spaces.User }) => {
     }
   }, [user.username, font]);
 
-  console.log(user.stream);
-
   return (
     <>
       {font ? (
@@ -55,11 +58,25 @@ const User = ({ user }: { user: Spaces.User }) => {
           <sphereGeometry></sphereGeometry>
         )}
 
-        {user.stream ? (
-          <PositionalAudio
-            url={URL.createObjectURL(user.stream)}
-          ></PositionalAudio>
-        ) : null}
+        {/*
+        <audio
+          ref={(ref) => {
+            if (user.stream) {
+              ref.srcObject = user.stream;
+            }
+            const { camera } = useThree();
+            ref.volume =
+              10 /
+              distance(
+                camera.position.x,
+                camera.position.y,
+                camera.position.z,
+                user.position.x,
+                user.position.y,
+                user.position.z
+              );
+          }}
+        />*/}
 
         <meshBasicMaterial
           attach="material"

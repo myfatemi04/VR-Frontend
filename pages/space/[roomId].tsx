@@ -1,11 +1,10 @@
 // React/Next.js
 import { lazy, Suspense, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
-import dynamic from "next/dynamic";
 
 // Three.js
 import * as THREE from "three";
-import { Canvas, useThree } from "react-three-fiber";
+import { Canvas } from "react-three-fiber";
 import Icon from "react-eva-icons/dist/Icon";
 import Table from "../../threejsmodels/Table";
 import Car from "../../threejsmodels/Car";
@@ -38,10 +37,6 @@ const createStandardUser: (id: string) => Spaces.User = (id: string) => {
 
 const OfficeSpacePage = () => {
   const { roomID } = useRouter().query;
-
-  const [myMediaStream, setMyMediaStream] = useState(null);
-
-  const peerjs = useRef(null);
   const [userList, setUserList] = useState<Spaces.User[]>([]);
   const [userID, setUserID] = useState<string>(null!);
   const [twilioRoom, setTwilioRoom] = useState<twilio.Room>(null!);
@@ -138,7 +133,7 @@ const OfficeSpacePage = () => {
               return {
                 ...user,
                 stream,
-              };
+              } as Spaces.User;
             } else {
               return user;
             }
@@ -150,11 +145,28 @@ const OfficeSpacePage = () => {
         let participantID = participant.identity;
 
         for (let audioTrack of Array.from(participant.audioTracks.values())) {
-          if (audioTrack.track) {
-            let stream = new MediaStream([audioTrack.track.mediaStreamTrack]);
+          audioTrack.on("subscribed", (track) => {
+            console.log("adding stream", track.mediaStreamTrack);
+            let stream = new MediaStream([track.mediaStreamTrack]);
             setAudioTrackForParticipant(participantID, stream);
-          }
+          });
         }
+
+        participant.on(
+          "trackPublished",
+          (publication: twilio.RemoteTrackPublication) => {
+            if (
+              publication.kind === "audio" &&
+              publication.track.kind === "audio"
+            ) {
+              let stream = new MediaStream([
+                publication.track.mediaStreamTrack,
+              ]);
+
+              setAudioTrackForParticipant(participantID, stream);
+            }
+          }
+        );
       };
 
       twilioRoom.participants.forEach(addParticipant);
