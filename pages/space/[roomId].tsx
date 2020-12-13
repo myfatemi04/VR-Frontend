@@ -8,6 +8,7 @@ import * as THREE from "three";
 import { Canvas, useThree } from "react-three-fiber";
 import Icon from "react-eva-icons/dist/Icon";
 import Table from "../../threejsmodels/Table";
+import Car from "../../threejsmodels/Car";
 
 // Socket libraries
 const peer = dynamic((() => import('peerjs')) as any, {ssr: false})
@@ -191,6 +192,7 @@ const OfficeSpacePage = () => {
           <Chair position={[0, 0, -0.5]} rotation={[0, (Math.PI * 3) / 2, 0]} />
           <Chair position={[4, 0, 0]} rotation={[0, Math.PI, 0]} />
           <Table scale={[0.9, 0.7, 1]} position={[1, 0, 1]} />
+          <Car scale={[0.5, 0.5, 0.5]} position={[1, 0, 1]} />
           {userList.map((user) => {
             if (user.id === userId) {
               return <CurrentUser key={user.id} user={user}></CurrentUser>;
