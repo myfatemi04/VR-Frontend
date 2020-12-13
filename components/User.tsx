@@ -31,6 +31,8 @@ const User = ({ user }: { user: Spaces.User }) => {
     }
   }, [user.username, font]);
 
+  console.log(user.stream);
+
   return (
     <>
       {font ? (

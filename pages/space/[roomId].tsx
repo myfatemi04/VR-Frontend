@@ -1,7 +1,7 @@
 // React/Next.js
 import { lazy, Suspense, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
-import dynamic from 'next/dynamic'
+import dynamic from "next/dynamic";
 
 // Three.js
 import * as THREE from "three";
@@ -10,8 +10,8 @@ import Icon from "react-eva-icons/dist/Icon";
 import Table from "../../threejsmodels/Table";
 
 // Socket libraries
-const peer = dynamic((() => import('peerjs')) as any, {ssr: false})
 import { io } from "socket.io-client";
+import * as twilio from "twilio-video";
 
 // Functions
 import addKeyEvents from "../../addKeyEvents";
@@ -36,144 +36,135 @@ const createStandardUser: (id: string) => Spaces.User = (id: string) => {
 };
 
 const OfficeSpacePage = () => {
-  const { roomId } = useRouter().query;
+  const { roomID } = useRouter().query;
 
   const [myMediaStream, setMyMediaStream] = useState(null);
 
-  const peerjs = useRef<Peer | null>(null); // useRef(new Peer());
+  const peerjs = useRef(null);
   const [userList, setUserList] = useState<Spaces.User[]>([]);
-  const [userId, setUserId] = useState<string>(null!);
-  const socket = React.useMemo(() => io("http://spaces-vr.herokuapp.com/"), []);
+  const [userID, setUserID] = useState<string>(null!);
+  const [twilioRoom, setTwilioRoom] = useState<twilio.Room>(null!);
+  const socket = React.useMemo(() => io("http://localhost:5000/"), []);
 
   useEffect(() => {
-    const three = useThree();
-
-    // Enable XR
-    three.gl.xr.enabled = true;
-  }, []);
-
-  useEffect(() => {
-    if (roomId == null) {
+    if (roomID == null) {
       return;
     }
 
     addKeyEvents(socket);
 
-    socket.emit("room", roomId);
-    socket.on("userId", (userId: string) => {
-      // Store our userId for future reference
-      setUserId(userId);
+    socket.emit("room", roomID);
+    socket.on(
+      "joined-room",
+      ({ userID, accessToken }: { userID: string; accessToken: string }) => {
+        console.log(
+          "Joined room! userID:",
+          userID + ", accesstoken:",
+          accessToken
+        );
 
-      // Now that we have our userId, we can start calling people
-      navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-        setMyMediaStream(stream);
-      });
+        // Store our userID for future reference
+        setUserID(userID);
 
-      // When another user connects
-      socket.on("connected", (connectedUserId: string) => {
-        // Initialize them to a standard user
-        setUserList([...userList, createStandardUser(connectedUserId)]);
-      });
+        twilio
+          .connect(accessToken, { audio: true, video: false })
+          .then((room) => {
+            setTwilioRoom(room);
+          });
 
-      // When a user disconnects
-      socket.on("disconnected", (disconnectedUserId: string) => {
-        // Remove them from Three.js
+        // When another user connects
+        socket.on("connected", (connectedUserID: string) => {
+          // Initialize them to a standard user
+          setUserList([...userList, createStandardUser(connectedUserID)]);
+        });
 
-        // Remove them from the users map
-        setUserList(userList.filter((user) => user.id !== disconnectedUserId));
-      });
+        // When a user disconnects
+        socket.on("disconnected", (disconnectedUserID: string) => {
+          // Remove them from Three.js
 
-      // When we receive data about a person, do this
-      socket.on(
-        "person-update",
-        (updatedUserId: string, data: Spaces.UpdateData) => {
-          setUserList((userList) => {
-            let newUserList: Spaces.User[] = [];
+          // Remove them from the users map
+          setUserList(
+            userList.filter((user) => user.id !== disconnectedUserID)
+          );
+        });
 
-            let found = false;
-            for (let user of userList) {
-              if (user.id !== updatedUserId) {
-                newUserList.push(user);
-              } else {
+        // When we receive data about a person, do this
+        socket.on(
+          "person-update",
+          (updatedUserID: string, data: Spaces.UpdateData) => {
+            setUserList((userList) => {
+              let newUserList: Spaces.User[] = [];
+
+              let found = false;
+              for (let user of userList) {
+                if (user.id !== updatedUserID) {
+                  newUserList.push(user);
+                } else {
+                  newUserList.push({
+                    ...user,
+                    ...data,
+                  });
+
+                  found = true;
+                }
+              }
+
+              if (!found) {
+                let newUser = createStandardUser(updatedUserID);
                 newUserList.push({
-                  ...user,
+                  ...newUser,
                   ...data,
                 });
-
-                found = true;
               }
-            }
 
-            if (!found) {
-              let newUser = createStandardUser(updatedUserId);
-              newUserList.push({
-                ...newUser,
-                ...data,
-              });
-            }
-
-            return newUserList;
-          });
-        }
-      );
-    });
-  }, [roomId]);
+              return newUserList;
+            });
+          }
+        );
+      }
+    );
+  }, [roomID]);
 
   useEffect(() => {
-    // We only want to initialize PeerJS in this hook
-    if (!peerjs.current) {
-      // peerjs.current = new Peer();
-    }
-
-    if (myMediaStream && peerjs.current) {
-      // Now, we start calling people we know
-      for (let user of userList) {
-        // We don't want to call ourselves
-        if (user.id === userId) {
-          continue;
-        }
-
-        // If the call already exists, don't call
-        if (!user.call) {
-          // Call the peer
-          let call = peerjs.current.call(user.id, myMediaStream);
-
-          // When we receive a stream from them, store it here
-          call.on("stream", (stream) => {
-            user.stream = stream;
+    if (twilioRoom) {
+      const setAudioTrackForParticipant = (
+        participantID: string,
+        stream: MediaStream
+      ) => {
+        setUserList((userList) => {
+          return userList.map((user) => {
+            if (user.id === participantID) {
+              return {
+                ...user,
+                stream,
+              };
+            } else {
+              return user;
+            }
           });
-        }
-      }
+        });
+      };
 
-      // If we get called, we can now answer the calls
-      peerjs.current.on("call", (call) => {
-        // Find the user who's calling
-        let user: Spaces.User = null;
-        for (let user_ of userList) {
-          if (user_.id === call.peer) {
-            user = user_;
+      const addParticipant = (participant: twilio.Participant) => {
+        let participantID = participant.identity;
+
+        for (let audioTrack of Array.from(participant.audioTracks.values())) {
+          if (audioTrack.track) {
+            let stream = new MediaStream([audioTrack.track.mediaStreamTrack]);
+            setAudioTrackForParticipant(participantID, stream);
           }
         }
+      };
 
-        if (!user) {
-          console.warn("Received call from somebody not in this room!");
-          console.warn("Not answering.");
-          return;
-        }
+      twilioRoom.participants.forEach(addParticipant);
 
-        // Store their call in the peers registry
-        user.call = call;
+      twilioRoom.on("participantConnected", addParticipant);
 
-        // Answer the call with our MediaStream
-        call.answer(myMediaStream);
-
-        // When we receive a stream from them, store it here
-        call.on("stream", (stream) => {
-          user.stream = stream;
-        });
-      });
+      return () => {
+        twilioRoom.off("participantConnected", addParticipant);
+      };
     }
-  }, [myMediaStream]);
+  }, [twilioRoom]);
 
   return (
     <>
@@ -183,6 +174,7 @@ const OfficeSpacePage = () => {
         colorManagement
         camera={{ position: [2, 1, 2], fov: 90 }}
         onCreated={({ gl }) => {
+          gl.xr.enabled = true;
           gl.setClearColor(new THREE.Color("#021F4B"));
         }}
       >
@@ -192,7 +184,7 @@ const OfficeSpacePage = () => {
           <Chair position={[4, 0, 0]} rotation={[0, Math.PI, 0]} />
           <Table scale={[0.9, 0.7, 1]} position={[1, 0, 1]} />
           {userList.map((user) => {
-            if (user.id === userId) {
+            if (user.id === userID) {
               return <CurrentUser key={user.id} user={user}></CurrentUser>;
             } else {
               return <User key={user.id} user={user}></User>;
