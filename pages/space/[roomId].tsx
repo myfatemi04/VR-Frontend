@@ -41,7 +41,7 @@ const OfficeSpacePage = () => {
   const [userList, setUserList] = useState<Spaces.User[]>([]);
   const [userID, setUserID] = useState<string>(null!);
   const [twilioRoom, setTwilioRoom] = useState<twilio.Room>(null!);
-  const socket = React.useMemo(() => io("http://localhost:5000/"), []);
+  const socket = React.useMemo(() => io("http://spaces-vr.herokuapp.com/"), []);
 
   useEffect(() => {
     if (roomID == null) {
