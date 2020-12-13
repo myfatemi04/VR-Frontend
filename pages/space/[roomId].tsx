@@ -1,6 +1,7 @@
 // React/Next.js
 import { lazy, Suspense, useEffect, useState, useRef } from "react";
 import { useRouter } from "next/router";
+import dynamic from 'next/dynamic'
 
 // Three.js
 import * as THREE from "three";
@@ -9,7 +10,7 @@ import Icon from "react-eva-icons/dist/Icon";
 import Table from "../../threejsmodels/Table";
 
 // Socket libraries
-import Peer from "peerjs";
+const peer = dynamic((() => import('peerjs')) as any, {ssr: false})
 import { io } from "socket.io-client";
 
 // Functions
