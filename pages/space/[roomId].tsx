@@ -8,6 +8,7 @@ import { Canvas } from "react-three-fiber";
 import Icon from "react-eva-icons/dist/Icon";
 import Table from "../../threejsmodels/Table";
 import Car from "../../threejsmodels/Car";
+import AnimeTiddies from "../../threejsmodels/AnimeTiddies";
 
 // Socket libraries
 import { io } from "socket.io-client";
@@ -197,6 +198,7 @@ const OfficeSpacePage = () => {
           <Chair position={[4, 0, 0]} rotation={[0, Math.PI, 0]} />
           <Table scale={[0.9, 0.7, 1]} position={[1, 0, 1]} />
           <Car scale={[0.5, 0.5, 0.5]} position={[1, 0, 1]} />
+          <AnimeTiddies scale={[1.2, 1.2, 1.2]} position={[1, 3, 1]} />
           {userList.map((user) => {
             if (user.id === userID) {
               return <CurrentUser key={user.id} user={user}></CurrentUser>;
