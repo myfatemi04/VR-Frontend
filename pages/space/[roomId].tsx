@@ -175,7 +175,9 @@ const OfficeSpacePage = () => {
         shadowMap
         colorManagement
         camera={{ position: [2, 1, 2], fov: 90 }}
-        onCreated={({ gl, camera }) => {
+        onCreated={(context) => {
+          const { gl } = context;
+          context.vr = true;
           gl.setClearColor(new THREE.Color("#021F4B"));
         }}
       >
