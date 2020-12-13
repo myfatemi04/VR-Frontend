@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 
 // Three.js
 import * as THREE from "three";
-import { Canvas } from "react-three-fiber";
+import { Canvas, useThree } from "react-three-fiber";
 import Icon from "react-eva-icons/dist/Icon";
 import Table from "../../threejsmodels/Table";
 
@@ -43,6 +43,13 @@ const OfficeSpacePage = () => {
   const [userList, setUserList] = useState<Spaces.User[]>([]);
   const [userId, setUserId] = useState<string>(null!);
   const socket = React.useMemo(() => io("http://spaces-vr.herokuapp.com/"), []);
+
+  useEffect(() => {
+    const three = useThree();
+
+    // Enable XR
+    three.gl.xr.enabled = true;
+  }, []);
 
   useEffect(() => {
     if (roomId == null) {
@@ -174,9 +181,7 @@ const OfficeSpacePage = () => {
         shadowMap
         colorManagement
         camera={{ position: [2, 1, 2], fov: 90 }}
-        onCreated={(context) => {
-          const { gl } = context;
-          context.vr = true;
+        onCreated={({ gl }) => {
           gl.setClearColor(new THREE.Color("#021F4B"));
         }}
       >
@@ -241,7 +246,7 @@ const Lights = () => {
       {/* Sky light */}
       <hemisphereLight
         intensity={1}
-        skyColor={new THREE.Color("#021F4B")}
+        color={new THREE.Color("#021F4B")}
         groundColor={new THREE.Color("#000000")}
       />
     </>
