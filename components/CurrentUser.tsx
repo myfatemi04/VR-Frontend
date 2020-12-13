@@ -7,7 +7,11 @@ import { useThree } from "react-three-fiber";
  */
 const CurrentUser = ({ user }: { user: Spaces.User }) => {
   const three = useThree();
-  three.camera.position.set(user.position.x, user.position.y, -user.position.z);
+  three.camera.position.set(
+    user.position.x,
+    user.position.y + 0.5,
+    -user.position.z
+  );
   three.camera.rotation.set(user.pitch, user.yaw, 0);
 
   return null;

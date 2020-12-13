@@ -44,7 +44,9 @@ const User = ({ user }: { user: Spaces.User }) => {
           ></meshBasicMaterial>
         </mesh>
       ) : null}
-      <mesh position={[user.position.x, user.position.y, user.position.z]}>
+      <mesh
+        position={[user.position.x, user.position.y + 0.5, user.position.z]}
+      >
         {user.shape === "cube" ? (
           <boxGeometry></boxGeometry>
         ) : (
