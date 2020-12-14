@@ -1,12 +1,21 @@
-import { PositionalAudio } from "./PositionalAudio";
 import React from "react";
 import * as THREE from "three";
-import { useThree } from "react-three-fiber";
 
 const fontLoader = new THREE.FontLoader();
 
-function distance(a, b, c, d, e, f) {
-  return Math.sqrt((a - d) * (a - d) + (b - e) * (b - e) + (c - f) * (c - f));
+type Vector3 = {
+  x: number;
+  y: number;
+  z: number;
+};
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function distance(a: Vector3, b: Vector3) {
+  return Math.sqrt(
+    (a.x - b.x) * (a.x - b.x) +
+      (a.y - b.y) * (a.y - b.y) +
+      (a.z - b.z) * (a.z - b.z)
+  );
 }
 
 const User = ({ user }: { user: Spaces.User }) => {

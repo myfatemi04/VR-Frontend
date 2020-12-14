@@ -1,23 +1,7 @@
-import Head from "next/head";
-
 import { NavTitle } from "../components/Typography";
 import LogicCard from "../components/LogicCard";
 
 export default function Home() {
-  return (
-    <div>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-        <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
-      </Head>
-      <HomeContent />
-    </div>
-  );
-}
-
-const HomeContent = () => {
   return (
     <div className="w-full h-full flex flex-col text-black bg-white">
       <Navbar />
@@ -26,7 +10,7 @@ const HomeContent = () => {
       </div>
     </div>
   );
-};
+}
 
 const Navbar = () => {
   return (

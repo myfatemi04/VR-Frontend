@@ -1,26 +1,25 @@
 // React/Next.js
-import { lazy, Suspense, useEffect, useState, useRef } from "react";
-import { useRouter } from "next/router";
+import React, { Suspense, useEffect, useState } from "react";
 
 // Three.js
 import * as THREE from "three";
 import { Canvas } from "react-three-fiber";
-import Icon from "react-eva-icons/dist/Icon";
-import Table from "../../threejsmodels/Table";
-import Car from "../../threejsmodels/Car";
-import AnimeTiddies from "../../threejsmodels/AnimeTiddies";
 
 // Socket libraries
 import { io } from "socket.io-client";
 import * as twilio from "twilio-video";
 
 // Functions
-import addKeyEvents from "../../addKeyEvents";
-import React from "react";
-import User from "../../components/User";
-import CurrentUser from "../../components/CurrentUser";
+import addKeyEvents from "../addKeyEvents";
+import User from "../components/User";
+import CurrentUser from "../components/CurrentUser";
+import Model from "../components/Model";
 
-const Chair = lazy(() => import("../../threejsmodels/Chair"));
+import { useParams } from "react-router-dom";
+
+const CHAIR_PATH = "/models/SitzfeldPanama.glb";
+const CAR_PATH = "/models/Ferrari 51.glb";
+const TABLE_PATH = "/models/table.glb";
 
 const createStandardUser: (id: string) => Spaces.User = (id: string) => {
   return {
@@ -37,7 +36,7 @@ const createStandardUser: (id: string) => Spaces.User = (id: string) => {
 };
 
 const OfficeSpacePage = () => {
-  const { roomID } = useRouter().query;
+  const { roomID } = useParams<{ roomID: string }>();
   const [userList, setUserList] = useState<Spaces.User[]>([]);
   const [userID, setUserID] = useState<string>(null!);
   const [twilioRoom, setTwilioRoom] = useState<twilio.Room>(null!);
@@ -72,7 +71,10 @@ const OfficeSpacePage = () => {
         // When another user connects
         socket.on("connected", (connectedUserID: string) => {
           // Initialize them to a standard user
-          setUserList([...userList, createStandardUser(connectedUserID)]);
+          setUserList((userList) => [
+            ...userList,
+            createStandardUser(connectedUserID),
+          ]);
         });
 
         // When a user disconnects
@@ -80,7 +82,7 @@ const OfficeSpacePage = () => {
           // Remove them from Three.js
 
           // Remove them from the users map
-          setUserList(
+          setUserList((userList) =>
             userList.filter((user) => user.id !== disconnectedUserID)
           );
         });
@@ -120,7 +122,7 @@ const OfficeSpacePage = () => {
         );
       }
     );
-  }, [roomID]);
+  }, [roomID, socket]);
 
   useEffect(() => {
     if (twilioRoom) {
@@ -156,15 +158,14 @@ const OfficeSpacePage = () => {
         participant.on(
           "trackPublished",
           (publication: twilio.RemoteTrackPublication) => {
-            if (
-              publication.kind === "audio" &&
-              publication.track.kind === "audio"
-            ) {
-              let stream = new MediaStream([
-                publication.track.mediaStreamTrack,
-              ]);
+            if (publication.kind === "audio") {
+              if (publication.track?.kind === "audio") {
+                let stream = new MediaStream([
+                  publication.track.mediaStreamTrack,
+                ]);
 
-              setAudioTrackForParticipant(participantID, stream);
+                setAudioTrackForParticipant(participantID, stream);
+              }
             }
           }
         );
@@ -182,6 +183,9 @@ const OfficeSpacePage = () => {
 
   return (
     <>
+      <div className="w-100 h-100 z-10 relative">
+        <CurrentUsers users={userList} />
+      </div>
       <Canvas
         concurrent
         shadowMap
@@ -194,11 +198,19 @@ const OfficeSpacePage = () => {
       >
         <Suspense fallback={null}>
           <Lights />
-          <Chair position={[0, 0, -0.5]} rotation={[0, (Math.PI * 3) / 2, 0]} />
-          <Chair position={[4, 0, 0]} rotation={[0, Math.PI, 0]} />
-          <Table scale={[0.9, 0.7, 1]} position={[1, 0, 1]} />
-          <Car scale={[0.5, 0.5, 0.5]} position={[1, 0, 1]} />
-          <AnimeTiddies scale={[1.2, 1.2, 1.2]} position={[1, 3, 1]} />
+          <Model
+            path={CHAIR_PATH}
+            position={[0, 0, -0.5]}
+            rotation={[0, (Math.PI * 3) / 2, 0]}
+          />
+          <Model
+            path={CHAIR_PATH}
+            position={[4, 0, 0]}
+            rotation={[0, Math.PI, 0]}
+          />
+          <Model path={TABLE_PATH} scale={[0.9, 0.7, 1]} position={[1, 0, 1]} />
+          <Model path={CAR_PATH} scale={[0.5, 0.5, 0.5]} position={[1, 0, 1]} />
+
           {userList.map((user) => {
             if (user.id === userID) {
               return <CurrentUser key={user.id} user={user}></CurrentUser>;
@@ -212,21 +224,25 @@ const OfficeSpacePage = () => {
   );
 };
 
-const CurrentUsers = () => {
-  let icon = <Icon fill="#fff" name="person" size="medium" />;
+const CurrentUsers = ({ users }: { users: Spaces.User[] }) => {
+  // let icon = <Icon fill="#fff" name="person" size="medium" />;
 
   return (
-    <div className="w-full bg-black rounded-lg">
-      <div className="w-full p-3 rounded-t-lg bg-purple-700 text-white mt-4 text-md font-bold">
+    <div className="w-full bg-black rounded-lg absolute m-8">
+      <div className="w-full p-3 rounded-t-lg bg-purple-700 text-white text-md font-bold">
         <div className="flex items-center flex-row">
-          {icon}
+          {/* {icon} */}
           <div className="ml-3">Usernames</div>
         </div>
       </div>
       <div className="w-full text-white p-3">
-        <div className="font-bold mb-3 ml-3">autinmitra</div>
-        <div className="font-bold mb-3 ml-3">myfatemi04</div>
-        <div className="font-bold mb-3 ml-3">snandiraju</div>
+        {users.map((user) => {
+          return (
+            <div className="font-bold mb-3 ml-3" key={user.id}>
+              {user.username}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

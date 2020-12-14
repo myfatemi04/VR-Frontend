@@ -3,7 +3,7 @@ import {
   AudioListener,
   PositionalAudio as PositionalAudioImpl,
 } from "three";
-import React, { forwardRef, useRef, useState, useEffect } from "react";
+import { forwardRef, useRef, useState, useEffect } from "react";
 import { useThree, useLoader } from "react-three-fiber";
 import mergeRefs from "react-merge-refs";
 

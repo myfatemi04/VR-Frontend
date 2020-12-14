@@ -11,7 +11,7 @@ export function Button({
   text?: string;
   color?: string;
   hoverColor?: string;
-  onClick: (a: React.MouseEvent) => void;
+  onClick: (event: React.MouseEvent) => void;
   icon: React.ReactChild;
   className?: string;
 }) {
